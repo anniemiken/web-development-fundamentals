@@ -11,10 +11,41 @@ html {
   
   /* Sections ========================================================================== */
   /** Remove the margin in all browsers (opinionated). */
-  body {
-    margin: 0;
+
+  .container{
+    display: grid;
+    grid-template-rows: auto 960px 200px;
+    grid-template-columns: 230px 11fr;
+    padding: 0px;
+    margin-left: 0;
+    grid-gap: none;
   }
-  
+
+  header{
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 1;
+    grid-row-end: 2;
+    text-align: center;    }
+
+main{
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 2;
+    grid-row-end: 3;
+    padding: 70px;
+  }
+
+footer{
+  grid-column-start: 2;
+  grid-column-end: 3;
+  grid-row-start: 3;
+  grid-row-end: 4;
+    padding: 10px;
+    background-color: grey;
+
+}
+
   /** Add the correct display in IE 9-. */
   article,
   aside,
@@ -29,7 +60,7 @@ html {
   h1 {
     font-size: 2em;
     margin: .67em 0;
-    color: green;
+    color: blue;
   }
   
   /* Grouping content ========================================================================== */
@@ -37,7 +68,7 @@ html {
   figcaption,
   figure,
   main {
-    /* 1 */ display: block;
+    /* 1 */ display: inline-block;
   }
   
   /** Add the correct margin in IE 8 (removed). */
@@ -290,8 +321,10 @@ html {
     background: #fff;
     color: #3b4351;
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    font-size: .8rem;
+    font-size: .65rem;
+    font-weight: 600;
     overflow-x: hidden;
+    margin: 0;
     text-rendering: optimizeLegibility;
   }
   
@@ -328,6 +361,10 @@ html {
     line-height: 1.2;
     margin-bottom: .5em;
     margin-top: 0;
+  }
+  h2{
+    margin-left: 70px;
+    margin-top: 10px;
   }
   
   .h1,
@@ -614,6 +651,7 @@ html {
     background: #5755d9;
     border-color: #4b48d6;
     color: #fff;
+    margin-right: 5px;
   }
   
   .btn.btn-primary:focus,
@@ -1514,14 +1552,6 @@ html {
     margin-top: .4rem;
   }
   
-  .container {
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: .4rem;
-    padding-right: .4rem;
-    width: 100%;
-  }
-  
   .container.grid-xl {
     max-width: 1296px;
   }
@@ -2031,6 +2061,9 @@ html {
     padding: .4rem;
   }
   
+  .docs-nav{
+    background-color: lightgray;
+  }
   .navbar {
     align-items: stretch;
     display: -ms-flexbox;
@@ -2637,16 +2670,20 @@ html {
   
   .nav {
     display: -ms-flexbox;
-    display: flex;
-    -ms-flex-direction: column;
-    flex-direction: column;
+    display: block;
     list-style: none;
-    margin: .2rem 0;
+    position: fixed;
+    background-color: lightgray;
+    height: 100%;
+    position: fixed; /* Stay in place */
+    margin-top: 0;
+    margin-left: 0;
+    width: 230px;
   }
   
   .nav .nav-item a {
     color: #66758c;
-    padding: .2rem .4rem;
+    padding: .4rem .4rem;
     text-decoration: none;
   }
   
@@ -2667,9 +2704,13 @@ html {
   
   .nav .nav {
     margin-bottom: .4rem;
-    margin-left: .8rem;
   }
   
+  .nav-item{
+    margin-bottom: 10px;
+    padding: 5px;
+    margin-left: 8px;
+  }
   .pagination {
     display: -ms-flexbox;
     display: flex;
