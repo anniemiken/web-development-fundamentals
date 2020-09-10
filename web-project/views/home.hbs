@@ -1,1 +1,20 @@
-<p>Welcome to my website</p>
+<p>Welcome to my website, my name is Annie Johansson and I am a software engineering student</p>
+<h2>Daily posts</h2>
+{{#if posts.length}}
+    {{#each posts}}
+    <div class="box-post">
+      <h3>#{{id}} {{title}}</h3>
+      <p>{{content}}</p>
+      {{#if ../isLoggedIn}}
+      <form method="get" action="#">
+      <input type="submit" class="btn btn-success" value="Update post">
+      </form> 
+      <form method="get" action="#">
+      <input type="submit" class="btn btn-error" value="Delete post">  
+      </form>   
+      {{/if}}
+    </div>
+    {{/each}}
+{{else}}
+  <p>No posts exist.</p>
+{{/if}}
