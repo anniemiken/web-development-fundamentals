@@ -1,61 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <script src="app.js"></script>
-  <link rel="stylesheet" href="/static/layout.css">
+  <link rel="stylesheet" href="/dist/layout.css">
   <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
+
 <body>
   <div class="container">
     <header class="navbar">
       <section class="navbar-section">
-        <h2 class="titleh2">Home page</h2>
+        <h2 class="titleh2">{{title}}</h2>
       </section>
       <section class="navbar-center">
-        <!-- centered logo or brand -->
       </section>
       <section class="navbar-section">
-        <a href="#" class="btn btn-link">Instagram</a>
-        <a href="#" class="btn btn-primary">Log in</a>
+        {{#if isLoggedIn}}
+        <a href="/home" class="btn btn-primary">Log out</a>
+        {{/if}}
       </section>
     </header>
     <div>
-    <ul class="nav">
-      <li class="nav-item">
+      <ul class="nav">
+        <li class="nav-item">
+          <br>
+          <h5>ANNIE JOHANSSON</h5>
+        </li>
         <br>
-        <h5>ANNIE JOHANSSON</h5>
-      </li>
-      <br>
-      <li class="nav-item active">
-        <a href="#">HOME</a><br>
-      </li>
-      <li class="nav-item">
-        <a href="#">PORTFOLIO</a>
-      </li>
-      <li class="nav-item">
-        <a href="#">CONTACT</a>
-      </li>
-      <li class="nav-item">
-        <a href="#">ABOUT</a>
-      </li>
-    </ul>
+        <li class="nav-item">
+          <a href="/home">HOME</a><br>
+        </li>
+        <li class="nav-item">
+          <a href="/portfolio">PORTFOLIO</a>
+        </li>
+        <li class="nav-item">
+          <a href="/contact">CONTACT</a>
+        </li>
+        <li class="nav-item">
+          <a href="/about">ABOUT</a>
+        </li>
+        <li class="nav-item">
+          <a href="/guestbook">GUESTBOOK</a>
+        </li>
+        {{#if isLoggedIn}}
+        <li class="nav-item">
+          <a href="/admin">ADMIN</a>
+        </li>
+        {{/if}}
+      </ul>
     </div>
     <main>
-      <p>Welcome to my website, my name is Annie Johansson and I am a software engineering student</p>
-      <img src="/static/main-picture.jpg" class="img-fit-contain ..." alt="...">
-      <img src="img/main-picture.jpg" class="img-fit-cover ..." alt="...">
-      <h2>Daily posts</h2>
+      {{{body}}}
     </main>
     <footer>
       <hr>
       <div>
-        <p><a href="https://github.com/joan19gn" target="_blank">GitHub</a> · <a href="https://www.instagram.com/" target="_blank">Instagram</a> · <a href="https://www.facebook.com" target="_blank">Facebook</a> · <a href="https://www.gmail.com" target="_blank">Email</a> </p> 
+        <p><a href="https://github.com/joan19gn" target="_blank">GitHub</a> · <a href="https://www.instagram.com/"
+            target="_blank">Instagram</a> · <a href="https://www.facebook.com" target="_blank">Facebook</a> · <a
+            href="https://www.gmail.com" target="_blank">Email</a> </p>
         <p>Designed and built with <span class="text-error">&star;</span> by Annie Johansson</a></p>
+        <a href="/login" class="">Log in</a>
       </div>
     </footer>
   </div>
 </body>
+
 </html>
