@@ -1,2 +1,29 @@
-<main>
-</main>
+<p>Welcome to guestbook, here you can post your opinion, it will help me!</p>
+<h3>Upload new guestbook posts</h3>
+<form class="form-group" id="guest2" methos="get" action="/guestbook">
+  <label class="form-label" for="input-example-1">Name</label>
+  <input class="form-input" type="text" id="input-example-1" placeholder="Name">
+  <label class="form-label" for="input-example-3">Message</label>
+  <textarea class="form-input" id="input-example-3" placeholder="Textarea" rows="5"></textarea>
+  <br>
+  <a href="/guestbook" class="btn btn-primary">Post</a>
+</form>
+<h3>Guestbook posts</h3>
+{{#if guestbook.length}}
+    {{#each guestbook}}
+    <div class="box-post">
+      <h3>#{{id1}} {{title1}}</h3>
+      <p>{{content1}}</p>
+      {{#if ../isLoggedIn}}
+      <form method="get" action="#">
+      <input type="submit" class="btn btn-success" value="Update post">
+      </form> 
+      <form method="get" action="#">
+      <input type="submit" class="btn btn-error" value="Delete post">  
+      </form>   
+      {{/if}}
+    </div>
+    {{/each}}
+{{else}}
+  <p>No posts exist.</p>
+{{/if}}
