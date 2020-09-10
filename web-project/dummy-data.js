@@ -1,13 +1,26 @@
 exports.humans = [{
   id: 0,
-  name: "Alice"
+  name: "Annie",
+  username: "annie.mik",
+  password: "hej123"
 }, {
-  id: 1,
-  name: "Bob"
+
 }]
 
-exports.pets = [{
+
+exports.posts = [{
   id: 0,
-  humanId: 1,
-  name: "Catty"
+  title: "Hello",
+  content: "hello again!"
+}, {
+  id: 2,
+  title: "Annies post",
+  content: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+}]
+
+
+exports.guestbook = [{
+  id1: 0,
+  title1: "Hello",
+  content1: "Hello!"
 }]
