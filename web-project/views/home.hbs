@@ -3,14 +3,14 @@
 {{#if posts.length}}
     {{#each posts}}
     <div class="box-post">
-      <h3>#{{id}} {{title}}</h3>
-      <p>{{content}}</p>
+      <h3>#{{id}} {{atitle}}</h3>
+      <p>{{acontent}}</p>
       {{#if ../isLoggedIn}}
-      <form method="get" action="#">
-      <input type="submit" class="btn btn-success" value="Update post">
+      <form method="post" action="/update-posts/{{id}}">
+        <input type="submit" class="btn btn-success" value="Update post">
       </form> 
-      <form method="get" action="#">
-      <input type="submit" class="btn btn-error" value="Delete post">  
+      <form method="post" action="/delete-posts/{{id}}">
+        <input type="submit" class="btn btn-error" value="Delete post">  
       </form>   
       {{/if}}
     </div>
