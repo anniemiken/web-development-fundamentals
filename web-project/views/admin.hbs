@@ -1,14 +1,14 @@
 <h2>Upload new blogpost</h2>
-<form method="get" action="/home" class="form-group" id="guest">
+<form method="post" action="/admin" class="form-group" id="guest">
     <label class="form-label" for="input-example-1">Title</label>
-    <input class="form-input" type="text" id="input-example-1" placeholder="Name">
+    <input class="form-input" type="text" id="input-example-1" name="atitle" placeholder="Title">
     <label class="form-label" for="input-example-3">Message</label>
-    <textarea class="form-input" id="input-example-3" placeholder="Textarea" rows="5"></textarea>
+    <textarea class="form-input" id="input-example-3" placeholder="Textarea" name="acontent" rows="5"></textarea>
     <br>
+    <input type="submit" class="btn btn-primary" value="Post">
 </form>
-<form method="get" action="/portfolio" class="form-group" id="guest">
-    <a href="/home" class="btn btn-primary">Post</a><br><br>
-    <h2>Upload picture</h2>
+<h2>Upload picture</h2>
+<form method="post" action="/portfolio" class="form-group" id="guest">
     <input type="file" class="form-input" id="myFile" name="filename"><br>
     <a href="/portfolio" class="btn btn-primary">Post</a>
 </form>
