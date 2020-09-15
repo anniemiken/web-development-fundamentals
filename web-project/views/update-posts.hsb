@@ -1,0 +1,9 @@
+<h3>Update post</h3>
+<form method="post" class="form-group" id="guest2" action="/home">
+    <label class="form-label" for="input-example-1">Title</label>
+    <input class="form-input" type="text" id="input-example-1" name="aname" value="{{atitle}}">
+    <label class="form-label" for="input-example-3">Message</label>
+    <textarea class="form-input" id="input-example-3" name="acontent" rows="5" value="{{acontent}}"></textarea>
+    <br>
+    <input type="submit" class="btn btn-primary" value="Save">
+</form>
