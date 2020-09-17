@@ -2,6 +2,7 @@ const dummyData = require('./dummy-data')
 const express = require('express')
 const app = express()
 const sqlite3 = require('sqlite3')
+const multer = require('multer')
 const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
@@ -25,21 +26,25 @@ const db = new sqlite3.Database("my-database.db")
 
 
 
-const posts = [{
+const blogposts = [{
   id: 1,
-  atitle: "Hello",
-  acontent: "hello again!"
-}
-]
+  title: "Hello",
+  content: "hello again!"
+},
+{ 
+  id: 2,
+  title: "Annies post",
+  content: "Today.."
+}]
 
-const gposts = [{
+const guestbookposts = [{
   id: 1,
-  gtitle: "Hello",
-  gcontent: "hello again!"
+  title: "Hello",
+  content: "hello again!"
 }, {
   id: 2,
-  gtitle: "Annies post",
-  gcontent: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+  title: "Annies post",
+  content: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
 }]
 
 
@@ -53,11 +58,11 @@ app.get('/', function(request, response){
 
 app.get('/home', function(request, response) { 
   const id = request.params.id
-  const post = posts.find(
+  const blogpost = blogposts.find(
     h => h.id == id
   )
   const model = {
-    posts,
+    blogposts,
     isLoggedIn: true,
     title: "Home page"
   }
@@ -66,20 +71,11 @@ app.get('/home', function(request, response) {
 
 app.post('/home', function(request, response){  
   const model = {
-    posts: posts,
+    blogposts: blogposts,
     isLoggedIn: true,
     title: "Home page"
   }
   response.render("home.hbs", model)
-})
-
-
-app.get('/portfolio', function(request, response) {
-  const model = {
-    title: "Portfolio",
-    isLoggedIn: true
-  }
-  response.render('portfolio.hbs' , model)
 })
 
 app.get('/about', function(request, response) {
@@ -104,28 +100,41 @@ app.post('/contact', function(request, response){
 })
 
 app.get('/guestbook', function(request, response) {
-  const gid = request.params.id
-  const gpost = gposts.find(
-    h => h.gid == gid
+  const id = request.params.id
+  const guestbookpost = guestbookposts.find(
+    h => h.id == id
   )
   const model = {
-    gposts: gposts,
+    guestbookposts,
     title: "Guestbook",
     isLoggedIn: true,
   }
   response.render('guestbook.hbs', model)
 })
 
+app.get('/blogpost/:id', function(request, response) {
+  const id = request.params.id
+  const blogpost = blogposts.find(
+    h => h.id == id
+  )
+  const model = {
+    blogpost,
+    title: "Details",
+    isLoggedIn: true,
+  }
+  response.render('blogpost.hbs', model)
+})
+
 app.post('/guestbook', function(request, response){
-  const gtitle = request.body.gtitle
-  const gcontent = request.body.gcontent
-  const gpost = {
-    id: gposts.length + 1,
-    gtitle, 
-    gcontent,
+  const title = request.body.title
+  const content = request.body.content
+  const guestbookpost = {
+    id: guestbookposts.length + 1,
+    title, 
+    content,
   }
 
-  gposts.push(gpost)
+  guestbookposts.push(guestbookpost)
   response.redirect('/guestbook')
 })
 
@@ -139,7 +148,7 @@ app.get('/login', function(request, response) {
 
 app.get('/admin', function(request, response) {
   const model = {
-    posts: posts,
+    blogposts: blogposts,
     title: "Admin page",
     isLoggedIn: true,
   }
@@ -147,50 +156,98 @@ app.get('/admin', function(request, response) {
 })
 
 app.post('/admin', function(request, response) {
-  const atitle = request.body.atitle
-  const acontent = request.body.acontent
-  const post = {
-    id: posts.length + 1,
-    atitle, 
-    acontent,
+  const title = request.body.title
+  const content = request.body.content
+  const blogpost = {
+    id: blogposts.length + 1,
+    title, 
+    content,
   }
 
-  posts.push(post)
+  blogposts.push(blogpost)
   response.redirect('/home')
 })
 
-app.get('/update-posts', function(request, response) {
+app.get('/update-posts/:id', function(request, response) {
   const id = request.params.id
-  const post = posts.find(
+  const blogpost = blogposts.find(
     h => h.id == id
   )
   const model = {
-    title: "Update page",
+    blogpost,
     isLoggedIn: true,
+    title: "Update page"
   }
+  console.log(model)
   response.render('update-posts.hbs', model)
 })
 
 app.post('/update-posts/:id', function(request, response) {
   const id = request.params.id
-  const newTitle = request.body.atitle
-  const newContent = request.body.acontent
-  const post = posts.find(
+  const newTitle = request.body.title
+  const newContent = request.body.content
+  const blogpost = blogposts.find(
     h => h.id == id
   )
-  atitle = newTitle
-  acontent = newContent
-  response.redirect("/update-posts")
+  blogpost.title = newTitle
+  blogpost.content = newContent
+
+  response.redirect("/home")
+})
+
+app.get('/update-gpost/:id', function(request, response) {
+  const id = request.params.id
+  const guestbookpost = guestbookposts.find(
+    h => h.id == id
+  )
+  const model = {
+    guestbookpost,
+    isLoggedIn: true,
+    title: "Update guestbook"
+  }
+  console.log(model)
+  response.render('update-gpost.hbs', model)
+})
+
+app.post('/update-gpost/:id', function(request, response) {
+  const id = request.params.id
+  const newTitle = request.body.title
+  const newContent = request.body.content
+  const guestbookpost = guestbookposts.find(
+    h => h.id == id
+  )
+  guestbookpost.title = newTitle
+  guestbookpost.content = newContent
+
+  response.redirect("/guestbook")
 })
 
 app.post('/delete-posts/:id', function(request, response) {
   const id = request.params.id
-  const postIndex = posts.findIndex(
+  const postIndex = blogposts.findIndex(
     h => h.id == id
   )
-  posts.splice(postIndex, 1)
+  blogposts.splice(postIndex, 1)
   response.redirect('/home')
 })
+
+app.post('/delete-gpost/:id', function(request, response) {
+  const id = request.params.id
+  const gpostIndex = guestbookposts.findIndex(
+    h => h.id == id
+  )
+  guestbookposts.splice(gpostIndex, 1)
+  response.redirect('/guestbook')
+})
+
+app.get('/portfolio', function(request, response) {
+  const model = {
+    title: "Portfolio",
+    isLoggedIn: true
+  }
+  response.render('portfolio.hbs' , model)
+})
+
 
 
 
