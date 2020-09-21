@@ -1,9 +1,9 @@
 <h3>Update post</h3>
-<form method="post" class="form-group" id="guest2" action="/home">
+<form method="post" class="form-group" id="guest2" action="/update-posts/{{blogpost.id}}">
     <label class="form-label" for="input-example-1">Title</label>
-    <input class="form-input" type="text" id="input-example-1" name="aname" value="{{atitle}}">
+    <input class="form-input" type="text" id="input-example-1" name="title" value="{{blogpost.title}}">
     <label class="form-label" for="input-example-3">Message</label>
-    <textarea class="form-input" id="input-example-3" name="acontent" rows="5" value="{{acontent}}"></textarea>
+    <textarea class="form-input" id="input-example-3" name="content" rows="5">{{blogpost.content}}</textarea>
     <br>
     <input type="submit" class="btn btn-primary" value="Save">
 </form>
