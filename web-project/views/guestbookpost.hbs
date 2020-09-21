@@ -1,0 +1,13 @@
+<p>Welcome to my website, my name is Annie Johansson and I am a software engineering student</p>
+<h2>Daily posts</h2>
+{{#if gbookpost}}
+<div class="box-post">
+    <h3>#{{gbookpost.id}} {{gbookpost.title}}</h3>
+    <p>{{gbookpost.content}}</p>
+    <form method="get" action="/guestbook">
+        <input type="submit" class="btn btn-primary" value="Go back">  
+    </form>
+</div>
+{{else}}
+<p>No posts exist.</p>
+{{/if}}
