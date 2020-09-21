@@ -3,12 +3,11 @@ const express = require('express')
 const app = express()
 const sqlite3 = require('sqlite3')
 const multer = require('multer')
+const cookieParser = require('cookie-parser')
+const session = require('express-session')
 const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
-const { allowedNodeEnvironmentFlags } = require('process')
-const { response } = require('express')
-const { kStringMaxLength } = require('buffer')
 
 app.use(bodyParser.urlencoded({
   extended: false
@@ -53,7 +52,7 @@ app.get('/', function(request, response){
 
 app.get('/home', function(request, response) { 
   const id = request.params.id
-  const query = "SELECT * FROM blogposts ORDER BY id"
+  const query = "SELECT * FROM blogposts ORDER BY id DESC"
   db.all(query, function(error, blogposts){
     if(error){
       console.log(error)
@@ -93,14 +92,9 @@ app.get('/contact', function(request, response) {
   response.render('contact.hbs', model)
 })
 
-app.post('/contact', function(request, response){
-  const name = req.body.name
-  const email = req.body.email
-})
 
 app.get('/guestbook', function(request, response) {
-  const id = request.params.id
-  const query = "SELECT * FROM gbookposts ORDER BY id"
+  const query = "SELECT * FROM gbookposts ORDER BY id DESC"
   db.all(query, function(error, gbookposts){
     if(error){
       console.log(error)
@@ -113,6 +107,20 @@ app.get('/guestbook', function(request, response) {
       response.render("guestbook.hbs", model)
     }
 })
+})
+
+app.post('/guestbook', function(request, response){
+  const title = request.body.title
+  const content = request.body.content
+  const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
+  const values = [title, content]
+  db.run(query, values, function(error){
+    if(error){
+      console.log(error)
+    }else{
+      response.redirect('/guestbook')
+    }
+  })
 })
 
 app.get('/guestbookpost/:id', function(request, response) {
@@ -151,21 +159,6 @@ app.get('/blogpost/:id', function(request, response) {
   })
 })
 
-app.post('/guestbook', function(request, response){
-  const id = request.params.id
-  const title = request.body.title
-  const content = request.body.content
-
-  const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
-  const values = [title, content]
-  db.run(query, values, function(error){
-    if(error){
-      console.log(error)
-    }else{
-      response.redirect('/guestbook')
-    }
-  })
-})
 
 app.get('/login', function(request, response) {
   const model = {
@@ -200,20 +193,29 @@ app.post('/admin', function(request, response) {
 
 app.get('/update-posts/:id', function(request, response) {
   const id = request.params.id
-  const model = {
-    isLoggedIn: true,
-    title: "Update page"
-  }
-  console.log(model)
-  response.render('update-posts.hbs', model)
+  const query = "SELECT * FROM blogposts WHERE id = ?"
+  const values = [id]
+  db.get(query, values, function(error, blogpost){
+    if(error){
+      console.log(error)
+    }else{
+      const model = {
+        blogpost,
+        title: "Update page",
+        isLoggedIn: true,
+      }
+      response.render('update-posts.hbs', model)
+    }
+  })
 })
 
 app.post('/update-posts/:id', function(request, response) {
   const id = request.params.id
   const newTitle = request.body.title
   const newContent = request.body.content
-  const query = "UPDATE blogposts SET title = ? WHERE id = ?"
-  db.run(query, [newTitle, newContent, id], function(error){
+  let values = [newTitle, newContent, id]
+  let query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
+  db.run(query, values, function(error){
     if(error){
       console.log(error)
     }else{
@@ -224,20 +226,30 @@ app.post('/update-posts/:id', function(request, response) {
 
 app.get('/update-gpost/:id', function(request, response) {
   const id = request.params.id
-  const model = {
-    isLoggedIn: true,
-    title: "Update guestbook"
-  }
-  console.log(model)
-  response.render('update-gpost.hbs', model)
+  const query = "SELECT * FROM gbookposts WHERE id = ?"
+  const values = [id]
+  db.get(query, values, function(error, gbookpost){
+    if(error){
+      console.log(error)
+    }else{
+      const model = {
+        gbookpost,
+        title: "Update page",
+        isLoggedIn: true,
+      }
+      response.render('update-gpost.hbs', model)
+    }
+  })
+  
 })
 
 app.post('/update-gpost/:id', function(request, response) {
   const id = request.params.id
   const newTitle = request.body.title
   const newContent = request.body.content
-  const query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
-  db.run(query, [newTitle, newContent, id], function(error){
+  let values = [newTitle, newContent, id]
+  let query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
+  db.run(query, values, function(error){
     if(error){
       console.log(error)
     }else{
