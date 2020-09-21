@@ -1,0 +1,9 @@
+<h3>Update guestbook</h3>
+<form method="post" class="form-group" id="guest2" action="/update-gpost/{{gbookpost.id}}">
+    <label class="form-label" for="input-example-1">Title</label>
+    <input class="form-input" type="text" id="input-example-1" name="title" value="{{gbookpost.title}}">
+    <label class="form-label" for="input-example-3">Message</label>
+    <textarea class="form-input" id="input-example-3" name="content" rows="5">{{gbookpost.content}}</textarea>
+    <br>
+    <input type="submit" class="btn btn-primary" value="Save">
+</form>
