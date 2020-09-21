@@ -1,0 +1,13 @@
+<p>Welcome to my website, my name is Annie Johansson and I am a software engineering student</p>
+<h2>Daily posts</h2>
+{{#if blogpost}}
+    <div class="box-post">
+      <h3>#{{blogpost.id}} {{blogpost.title}}</h3>
+      <p>{{blogpost.content}}</p>
+      <form method="get" action="/home">
+        <input type="submit" class="btn btn-primary" value="Go back">  
+    </form>
+    </div>
+{{else}}
+  <p>No posts exist.</p>
+{{/if}}
