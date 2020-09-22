@@ -4,19 +4,29 @@ const app = express()
 const sqlite3 = require('sqlite3')
 const multer = require('multer')
 const cookieParser = require('cookie-parser')
-const session = require('express-session')
+const expressSession = require('express-session')
 const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
+const SQLiteStore = require("connect-sqlite3")(expressSession); 
 
+
+const MIN_TITLE_LENGTH = 1
+const MIN_CONTENT_LENGTH = 2
 app.use(bodyParser.urlencoded({
   extended: false
 }))
 
-app.listen(8080, function(){
+app.listen(8080, function () {
   console.log("Server started on port 8080...");
 });
 
+app.use(expressSession({
+  secret: "dffdfdfgrtggvcdfd",
+  saveUninitialized: false,
+  resave: false,
+  store: new SQLiteStore()
+}))
 
 app.engine('hbs', expressHandlebars({
   defaultLayout: 'main.hbs',
@@ -24,6 +34,8 @@ app.engine('hbs', expressHandlebars({
 const db = new sqlite3.Database("my-database.db")
 
 
+const adminUsername = "annie"
+const adminPassword = "00aa11"
 
 db.run(`
   CREATE TABLE IF NOT EXISTS blogposts(
@@ -41,253 +53,366 @@ db.run(`
   )
 `)
 
-
-app.get('/', function(request, response){
+app.get('/', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const model = {
-    isLoggedIn: true,
-    title: "Home page"
+    title: "Home page",
+    isLoggedIn
   }
   response.render("home.hbs", model)
 })
 
-app.get('/home', function(request, response) { 
-  const id = request.params.id
+app.get('/home', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM blogposts ORDER BY id DESC"
-  db.all(query, function(error, blogposts){
-    if(error){
+  db.all(query, function (error, blogposts) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         blogposts,
-        isLoggedIn: true,
+        isLoggedIn,
         title: "Home page"
       }
       response.render("home.hbs", model)
     }
-})
+  })
 })
 
-app.post('/home', function(request, response){  
+app.post('/home', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const model = {
+    isLoggedIn,
     blogposts: blogposts,
-    isLoggedIn: true,
     title: "Home page"
   }
   response.render("home.hbs", model)
 })
 
-app.get('/about', function(request, response) {
+app.get('/about', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const model = {
     title: "About page",
-    isLoggedIn: true
+    isLoggedIn
   }
   response.render('about.hbs', model)
 })
 
-app.get('/contact', function(request, response) {
+app.get('/contact', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const model = {
     title: "Contact page",
-    isLoggedIn: true
+    isLoggedIn
   }
   response.render('contact.hbs', model)
 })
 
 
-app.get('/guestbook', function(request, response) {
+app.get('/guestbook', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM gbookposts ORDER BY id DESC"
-  db.all(query, function(error, gbookposts){
-    if(error){
+  db.all(query, function (error, gbookposts) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         gbookposts,
-        isLoggedIn: true,
+        isLoggedIn,
         title: "Guestbook page"
       }
       response.render("guestbook.hbs", model)
     }
-})
+  })
 })
 
-app.post('/guestbook', function(request, response){
+app.post('/guestbook', function (request, response) {
   const title = request.body.title
   const content = request.body.content
   const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
   const values = [title, content]
-  db.run(query, values, function(error){
-    if(error){
+  db.run(query, values, function (error) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       response.redirect('/guestbook')
     }
   })
 })
 
-app.get('/guestbookpost/:id', function(request, response) {
+app.get('/guestbookpost/:id', function (request, response) {
   const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM gbookposts WHERE id = ?"
   const values = [id]
-  db.get(query, values, function(error, gbookpost){
-    if(error){
+  db.get(query, values, function (error, gbookpost) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         gbookpost,
         title: "Details guestbook page",
-        isLoggedIn: true,
+        isLoggedIn,
       }
       response.render('guestbookpost.hbs', model)
     }
   })
 })
 
-app.get('/blogpost/:id', function(request, response) {
+app.get('/blogpost/:id', function (request, response) {
   const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
+
   const query = "SELECT * FROM blogposts WHERE id = ?"
   const values = [id]
-  db.get(query, values, function(error, blogpost){
-    if(error){
+  db.get(query, values, function (error, blogpost) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         blogpost,
         title: "Details page",
-        isLoggedIn: true,
+        isLoggedIn,
       }
       response.render('blogpost.hbs', model)
     }
   })
 })
 
+app.use(function (request, response, next) {
+  const isLoggedIn = request.session.isLoggedIn
+  response.locals.isLoggedIn = isLoggedIn
+  next()
+})
 
-app.get('/login', function(request, response) {
+app.get('/login', function (request, response) {
   const model = {
-    isLoggedIn: true,
-    layout: false 
-    }
+    layout: false
+  }
   response.render('login.hbs', model)
 })
 
-app.get('/admin', function(request, response) {
-  const model = {
-    title: "Admin page",
-    isLoggedIn: true,
+app.post("/login", function (request, response) {
+  const enteredUsername = request.body.username
+  const enteredPassword = request.body.password
+
+  if (enteredUsername == adminUsername && enteredPassword == adminPassword) {
+    request.session.isLoggedIn = true
+    response.redirect("/home")
+  } else {
+    console.log("wrong username or wrong password")
+    response.redirect("/guestbook")
   }
-  response.render('admin.hbs', model)
 })
 
-app.post('/admin', function(request, response) {
+app.get('/admin', function (request, response) {
+  if(request.session.isLoggedIn){
+    const model = {
+      validationError: [],
+      title: "Admin page",
+    }
+    response.render('admin.hbs', model)
+  }else{
+    response.redirect("/login")
+  }
+  
+})
+
+function getValidationErrorsForPost(title, content) {
+  const validationError = []
+  if (title.length <= MIN_TITLE_LENGTH) {
+    validationError.push("Title should contain at least " + MIN_TITLE_LENGTH + " character")
+  }
+  if (content.length <= MIN_CONTENT_LENGTH) {
+    validationError.push("Content should contain at least " + MIN_CONTENT_LENGTH + " characters")
+  }
+  return validationError
+}
+
+app.post('/admin', function (request, response) {
   const title = request.body.title
   const content = request.body.content
 
-  const query = "INSERT INTO blogposts (title, content) VALUES (?,?)"
-  const values = [title, content]
-  db.run(query, values, function(error){
-    if(error){
-      console.log(error)
-    }else{
-      response.redirect('/home')
+  const errors = getValidationErrorsForPost(title, content)
+
+  if (!request.session.isLoggedIn) {
+    errors.push("You have to login to make a blogpost.")
+  }
+  if (errors.length == 0) {
+    const query = "INSERT INTO blogposts (title, content) VALUES (?,?)"
+    const values = [title, content]
+    db.run(query, values, function (error) {
+      if (error) {
+        console.log(error)
+      } else {
+        response.redirect('/home')
+      }
+    })
+  } else {
+    const model = {
+      errors,
+      title: "Admin page"
     }
-  })
+    response.render('admin.hbs', model)
+  }
+
 })
 
-app.get('/update-posts/:id', function(request, response) {
+app.get('/update-posts/:id', function (request, response) {
+  if(request.session.isLoggedIn){
+    const model = {
+      validationError: [],
+      title: "Update blogpost page",
+    }
+    response.render('update-posts.hbs', model)
+  }else{
+    response.redirect("/login")
+  }
   const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM blogposts WHERE id = ?"
   const values = [id]
-  db.get(query, values, function(error, blogpost){
-    if(error){
+  db.get(query, values, function (error, blogpost) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         blogpost,
         title: "Update page",
-        isLoggedIn: true,
+        isLoggedIn,
       }
       response.render('update-posts.hbs', model)
     }
   })
 })
 
-app.post('/update-posts/:id', function(request, response) {
+app.post('/update-posts/:id', function (request, response) {
+  const errors = getValidationErrorsForPost(title, content)
+
+  if (!request.session.isLoggedIn) {
+    errors.push("You have to login to update a blogpost.")
+  }
   const id = request.params.id
   const newTitle = request.body.title
   const newContent = request.body.content
-  let values = [newTitle, newContent, id]
-  let query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
-  db.run(query, values, function(error){
-    if(error){
-      console.log(error)
-    }else{
-      response.redirect("/home")
+
+  const validationError = getValidationErrorsForPost(newTitle, newContent)
+  if(validationError.length == 0){
+    const values = [newTitle, newContent, id]
+    const query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
+    db.run(query, values, function (error) {
+      if (error) {
+        console.log(error)
+      } else {
+        response.redirect("/home")
     }
   })
+  }else{
+    const model = {
+      errors,
+      blogpost: {
+        id, 
+        title: newTitle,
+        content: newContent
+      }, 
+      validationError
+    }
+    response.render('update-posts.hbs', model)
+  }  
 })
 
-app.get('/update-gpost/:id', function(request, response) {
+app.get('/update-gpost/:id', function (request, response) {
+  if(request.session.isLoggedIn){
+    const model = {
+      validationError: [],
+      title: "Update guestbook page",
+    }
+    response.render('update-gpost.hbs', model)
+  }else{
+    response.redirect("/login")
+  }
   const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM gbookposts WHERE id = ?"
   const values = [id]
-  db.get(query, values, function(error, gbookpost){
-    if(error){
+  db.get(query, values, function (error, gbookpost) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       const model = {
         gbookpost,
         title: "Update page",
-        isLoggedIn: true,
+        isLoggedIn,
       }
       response.render('update-gpost.hbs', model)
     }
   })
-  
+
 })
 
-app.post('/update-gpost/:id', function(request, response) {
+app.post('/update-gpost/:id', function (request, response) {
   const id = request.params.id
   const newTitle = request.body.title
   const newContent = request.body.content
-  let values = [newTitle, newContent, id]
-  let query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
-  db.run(query, values, function(error){
-    if(error){
-      console.log(error)
-    }else{
-      response.redirect("/guestbook")
+  const validationError = getValidationErrorsForPost(newTitle, newContent)
+  if(validationError.length == 0){
+    const values = [newTitle, newContent, id]
+    const query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
+    db.run(query, values, function (error) {
+      if (error) {
+        console.log(error)
+      } else {
+        response.redirect("/guestbook")
     }
   })
+  }else{
+    const model = {
+      gbookpost: {
+        id, 
+        title: newTitle,
+        content: newContent
+      }, 
+      validationError
+    }
+    response.render('update-gpost.hbs', model)
+  }  
 })
 
-app.post('/delete-posts/:id', function(request, response) {
+app.post('/delete-posts/:id', function (request, response) {
   const id = request.params.id
   const query = "DELETE FROM blogposts WHERE id = ?"
-  db.run(query, [id], function(error){
-    if(error){
+  db.run(query, [id], function (error) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       response.redirect('/home')
     }
   })
 })
 
-app.post('/delete-gpost/:id', function(request, response) {
+app.post('/delete-gpost/:id', function (request, response) {
   const id = request.params.id
   const query = "DELETE FROM gbookposts WHERE id = ?"
-  db.run(query, [id], function(error){
-    if(error){
+  db.run(query, [id], function (error) {
+    if (error) {
       console.log(error)
-    }else{
+    } else {
       response.redirect('/guestbook')
     }
   })
 })
 
-app.get('/portfolio', function(request, response) {
+app.get('/portfolio', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const model = {
     title: "Portfolio",
-    isLoggedIn: true
+    isLoggedIn
   }
-  response.render('portfolio.hbs' , model)
+  response.render('portfolio.hbs', model)
+})
+
+app.post("/logout", function (request, response) {
+  request.session.isLoggedIn = false
+  response.redirect("/home")
 })
 
 
