@@ -9,10 +9,16 @@ const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
 const SQLiteStore = require("connect-sqlite3")(expressSession); 
+const { response } = require('express')
 
 
 const MIN_TITLE_LENGTH = 1
 const MIN_CONTENT_LENGTH = 2
+const MIN_DESCRIPTION_LENGTH = 1
+const MIN_NAME_LENGTH = 1
+const MIN_USERNAME_LENGTH = 1
+const MIN_PASSWORD_LENGTH = 1
+
 app.use(bodyParser.urlencoded({
   extended: false
 }))
@@ -39,7 +45,7 @@ const adminPassword = "00aa11"
 
 db.run(`
   CREATE TABLE IF NOT EXISTS blogposts(
-    id INTGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
     content TEXT
   )
@@ -50,6 +56,14 @@ db.run(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
     content TEXT
+  )
+`)
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS projects(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    description TEXT
   )
 `)
 
@@ -126,18 +140,39 @@ app.get('/guestbook', function (request, response) {
 })
 
 app.post('/guestbook', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
   const title = request.body.title
   const content = request.body.content
-  const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
-  const values = [title, content]
-  db.run(query, values, function (error) {
+const errors = getValidationErrorsForPost(title, content);
+
+  if (errors.length == 0) {
+    const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
+    const values = [title, content]
+    db.run(query, values, function (error) {
+      if (error) {
+        console.log(error)
+      } else {
+        response.redirect('/guestbook')
+      }
+    })
+  } else {
+    const query1 = "SELECT * FROM gbookposts ORDER BY id DESC"
+    db.all(query1, function (error, gbookposts) {
     if (error) {
       console.log(error)
     } else {
-      response.redirect('/guestbook')
+      const model = {
+        errors,
+        gbookposts,
+        isLoggedIn,
+        title: "Guestbook page"
+      }
+      response.render("guestbook.hbs", model)
     }
   })
+  }
 })
+
 
 app.get('/guestbookpost/:id', function (request, response) {
   const id = request.params.id
@@ -194,14 +229,18 @@ app.get('/login', function (request, response) {
 app.post("/login", function (request, response) {
   const enteredUsername = request.body.username
   const enteredPassword = request.body.password
-
-  if (enteredUsername == adminUsername && enteredPassword == adminPassword) {
-    request.session.isLoggedIn = true
+  request.session.isLoggedIn = true
+  const errors = getValidationErrorsForLogin(enteredPassword, enteredUsername)
+  if (errors.length == 0) {
     response.redirect("/home")
   } else {
-    console.log("wrong username or wrong password")
-    response.redirect("/guestbook")
+    const model = {
+      errors,
+      layout: false
+    }
+    response.render('login.hbs', model)
   }
+    
 })
 
 app.get('/admin', function (request, response) {
@@ -226,6 +265,32 @@ function getValidationErrorsForPost(title, content) {
     validationError.push("Content should contain at least " + MIN_CONTENT_LENGTH + " characters")
   }
   return validationError
+}
+
+function getValidationErrorsForProject(name, description) {
+  const validationError = []
+  if (name.length <= MIN_NAME_LENGTH) {
+    validationError.push("Name should contain at least " + MIN_NAME_LENGTH + " character")
+  }
+  if (description.length <= MIN_DESCRIPTION_LENGTH) {
+    validationError.push("Description should contain at least " + MIN_DESCRIPTION_LENGTH + " characters")
+  }
+  return validationError
+}
+
+function getValidationErrorsForLogin(enteredPassword, enteredUsername){
+  const errors = []
+   if(enteredPassword < MIN_PASSWORD_LENGTH){
+    errors.push("Fill in password")
+   }
+   if(enteredUsername < MIN_USERNAME_LENGTH){
+     errors.push("Fill in username")
+   }
+   if(enteredUsername != adminUsername && enteredPassword != adminPassword) {
+    console.log("wrong username or wrong password");
+    errors.push("Wrong username or wrong password")
+   }
+   return errors
 }
 
 app.post('/admin', function (request, response) {
@@ -258,7 +323,7 @@ app.post('/admin', function (request, response) {
 })
 
 app.get('/update-posts/:id', function (request, response) {
-  if(request.session.isLoggedIn){
+  /*if(request.session.isLoggedIn){
     const model = {
       validationError: [],
       title: "Update blogpost page",
@@ -266,7 +331,7 @@ app.get('/update-posts/:id', function (request, response) {
     response.render('update-posts.hbs', model)
   }else{
     response.redirect("/login")
-  }
+  }*/
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM blogposts WHERE id = ?"
@@ -286,16 +351,15 @@ app.get('/update-posts/:id', function (request, response) {
 })
 
 app.post('/update-posts/:id', function (request, response) {
-  const errors = getValidationErrorsForPost(title, content)
-
-  if (!request.session.isLoggedIn) {
-    errors.push("You have to login to update a blogpost.")
-  }
   const id = request.params.id
   const newTitle = request.body.title
   const newContent = request.body.content
-
   const validationError = getValidationErrorsForPost(newTitle, newContent)
+
+  if (!request.session.isLoggedIn) {
+    validationError.push("You have to login to update a blogpost.")
+  }
+
   if(validationError.length == 0){
     const values = [newTitle, newContent, id]
     const query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
@@ -308,7 +372,6 @@ app.post('/update-posts/:id', function (request, response) {
   })
   }else{
     const model = {
-      errors,
       blogpost: {
         id, 
         title: newTitle,
@@ -321,7 +384,7 @@ app.post('/update-posts/:id', function (request, response) {
 })
 
 app.get('/update-gpost/:id', function (request, response) {
-  if(request.session.isLoggedIn){
+  /*if(request.session.isLoggedIn){
     const model = {
       validationError: [],
       title: "Update guestbook page",
@@ -330,6 +393,8 @@ app.get('/update-gpost/:id', function (request, response) {
   }else{
     response.redirect("/login")
   }
+  */
+ 
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
   const query = "SELECT * FROM gbookposts WHERE id = ?"
@@ -354,6 +419,9 @@ app.post('/update-gpost/:id', function (request, response) {
   const newTitle = request.body.title
   const newContent = request.body.content
   const validationError = getValidationErrorsForPost(newTitle, newContent)
+  if (!request.session.isLoggedIn) {
+    validationError.push("You have to login to update a gueestbook post.")
+  }
   if(validationError.length == 0){
     const values = [newTitle, newContent, id]
     const query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
@@ -371,7 +439,8 @@ app.post('/update-gpost/:id', function (request, response) {
         title: newTitle,
         content: newContent
       }, 
-      validationError
+      validationError,
+      title: "Update guestbook post"
     }
     response.render('update-gpost.hbs', model)
   }  
@@ -401,13 +470,153 @@ app.post('/delete-gpost/:id', function (request, response) {
   })
 })
 
+app.post('/delete-project/:id', function (request, response) {
+  const id = request.params.id
+  const query = "DELETE FROM projects WHERE id = ?"
+  db.run(query, [id], function (error) {
+    if (error) {
+      console.log(error)
+    } else {
+      response.redirect('/portfolio')
+    }
+  })
+})
+
 app.get('/portfolio', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
-  const model = {
-    title: "Portfolio",
-    isLoggedIn
+  const query = "SELECT * FROM projects ORDER BY id DESC"
+  db.all(query, function (error, projects) {
+    if (error) {
+      console.log(error)
+    } else {
+      const model = {
+        projects,
+        isLoggedIn,
+        title: "Portfolio page"
+      }
+      response.render("portfolio.hbs", model)
+    }
+  })
+})
+
+app.post('/portfolio', function (request, response) {
+  const isLoggedIn = request.session.isLoggedIn
+  const name = request.body.name
+  const description = request.body.description
+  const validationError = getValidationErrorsForProject(name, description);
+  if(validationError.length == 0){
+    const query = "INSERT INTO projects (name, description) VALUES (?,?)"
+    const values = [name, description]
+    db.run(query, values, function (error) {
+      if (error) {
+        console.log(error)
+      } else {
+        response.redirect('/portfolio')
+      }
+    })
+  }else{
+    const query1 = "SELECT * FROM projects ORDER BY id DESC"
+    db.all(query1, function (error, projects) {
+    if (error) {
+      console.log(error)
+    } else {
+      const model = {
+        validationError,
+        projects,
+        isLoggedIn,
+        title: "Portfolio page"
+      }
+      response.render("portfolio.hbs", model)
+    }
+  })
+  }  
+})
+
+app.get('/update-project/:id', function (request, response) {
+  /*if(request.session.isLoggedIn){
+    const model = {
+      validationError: [],
+      title: "Update guestbook page",
+    }
+    response.render('update-gpost.hbs', model)
+  }else{
+    response.redirect("/login")
   }
-  response.render('portfolio.hbs', model)
+  */
+ 
+  const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
+  const query = "SELECT * FROM projects WHERE id = ?"
+  const values = [id]
+  db.get(query, values, function (error, project) {
+    if (error) {
+      console.log(error)
+    } else {
+      const model = {
+        project,
+        title: "Update project page",
+        isLoggedIn,
+      }
+      response.render('update-project.hbs', model)
+    }
+  })
+
+})
+
+app.post('/update-project/:id', function (request, response) {
+  const id = request.params.id
+  const newName = request.body.name
+  const newDescription = request.body.description
+  /*const validationError = getValidationErrorsForPost(newTitle, newContent)
+  if (!request.session.isLoggedIn) {
+    validationError.push("You have to login to update a project.")
+  }*/
+  const validationError = getValidationErrorsForProject(newName, newDescription)
+  if (!request.session.isLoggedIn) {
+    validationError.push("You have to login to update a project post.")
+  }
+    if(validationError.length == 0){
+      const values = [newName, newDescription, id]
+      const query = "UPDATE projects SET name = ?, description = ? WHERE id = ?"
+      db.run(query, values, function (error) {
+        if (error) {
+          console.log(error)
+        } else {
+          response.redirect("/portfolio")
+      }
+    })
+    }else{
+      const model = {
+        project: {
+          id, 
+          name: newName,
+          description: newDescription
+        }, 
+        validationError,
+        title: "Update portfolio post"
+      }
+      response.render('update-gpost.hbs', model)
+    }
+})
+
+app.get('/project/:id', function (request, response) {
+  const id = request.params.id
+  const isLoggedIn = request.session.isLoggedIn
+
+  const query = "SELECT * FROM projects WHERE id = ?"
+  const values = [id]
+  db.get(query, values, function (error, project) {
+    if (error) {
+      console.log(error)
+    } else {
+      const model = {
+        project,
+        title: "Details page",
+        isLoggedIn,
+      }
+      response.render('project.hbs', model)
+    }
+  })
 })
 
 app.post("/logout", function (request, response) {
