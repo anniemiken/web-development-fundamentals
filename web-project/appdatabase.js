@@ -9,15 +9,13 @@ const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
 const SQLiteStore = require("connect-sqlite3")(expressSession); 
-const { response } = require('express')
 
 
 const MIN_TITLE_LENGTH = 1
 const MIN_CONTENT_LENGTH = 2
 const MIN_DESCRIPTION_LENGTH = 1
 const MIN_NAME_LENGTH = 1
-const MIN_USERNAME_LENGTH = 1
-const MIN_PASSWORD_LENGTH = 1
+
 
 app.use(bodyParser.urlencoded({
   extended: false
@@ -280,15 +278,13 @@ function getValidationErrorsForProject(name, description) {
 
 function getValidationErrorsForLogin(enteredPassword, enteredUsername){
   const errors = []
-   if(enteredPassword < MIN_PASSWORD_LENGTH){
-    errors.push("Fill in password")
+   if(enteredUsername != adminUsername) {
+    console.log("Wrong username");
+    errors.push("Wrong username")
    }
-   if(enteredUsername < MIN_USERNAME_LENGTH){
-     errors.push("Fill in username")
-   }
-   if(enteredUsername != adminUsername && enteredPassword != adminPassword) {
-    console.log("wrong username or wrong password");
-    errors.push("Wrong username or wrong password")
+   if(enteredPassword != adminPassword){
+    console.log("Wrong password");
+    errors.push("Wrong password")
    }
    return errors
 }
