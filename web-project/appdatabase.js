@@ -8,6 +8,7 @@ const expressSession = require('express-session')
 const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
+const flash = require('connect-flash');
 const SQLiteStore = require("connect-sqlite3")(expressSession); 
 
 
@@ -79,7 +80,8 @@ app.get('/home', function (request, response) {
   const query = "SELECT * FROM blogposts ORDER BY id DESC"
   db.all(query, function (error, blogposts) {
     if (error) {
-      console.log(error)
+      console.log(error) 
+      response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
     } else {
       const model = {
         blogposts,
@@ -125,6 +127,7 @@ app.get('/guestbook', function (request, response) {
   const query = "SELECT * FROM gbookposts ORDER BY id DESC"
   db.all(query, function (error, gbookposts) {
     if (error) {
+      response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
     } else {
       const model = {
@@ -148,6 +151,7 @@ const errors = getValidationErrorsForPost(title, content);
     const values = [title, content]
     db.run(query, values, function (error) {
       if (error) {
+        response.render("errorMessage.hbs", {errorMessage: "Could not insert data into database, Try again later"})
         console.log(error)
       } else {
         response.redirect('/guestbook')
@@ -157,6 +161,7 @@ const errors = getValidationErrorsForPost(title, content);
     const query1 = "SELECT * FROM gbookposts ORDER BY id DESC"
     db.all(query1, function (error, gbookposts) {
     if (error) {
+      response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
     } else {
       const model = {
@@ -179,6 +184,7 @@ app.get('/guestbookpost/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, gbookpost) {
     if (error) {
+      response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
     } else {
       const model = {
@@ -199,6 +205,7 @@ app.get('/blogpost/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, blogpost) {
     if (error) {
+      response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
     } else {
       const model = {
@@ -216,6 +223,13 @@ app.use(function (request, response, next) {
   response.locals.isLoggedIn = isLoggedIn
   next()
 })
+
+app.get('/error', function(request, response){
+  request.session.isLoggedIn = true
+  response.render('errorMessage.hbs')
+  
+})
+
 
 app.get('/login', function (request, response) {
   const model = {
@@ -238,7 +252,6 @@ app.post("/login", function (request, response) {
     }
     response.render('login.hbs', model)
   }
-    
 })
 
 app.get('/admin', function (request, response) {
@@ -304,6 +317,7 @@ app.post('/admin', function (request, response) {
     db.run(query, values, function (error) {
       if (error) {
         console.log(error)
+        response.render('errorMessage.hbs', {errorMessage: "Could not insert data into database, try again later"})
       } else {
         response.redirect('/home')
       }
@@ -317,6 +331,7 @@ app.post('/admin', function (request, response) {
   }
 
 })
+
 
 app.get('/update-posts/:id', function (request, response) {
   /*if(request.session.isLoggedIn){
@@ -334,6 +349,7 @@ app.get('/update-posts/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, blogpost) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not select from database, try again later"})
       console.log(error)
     } else {
       const model = {
@@ -361,6 +377,7 @@ app.post('/update-posts/:id', function (request, response) {
     const query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
     db.run(query, values, function (error) {
       if (error) {
+        response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
         console.log(error)
       } else {
         response.redirect("/home")
@@ -373,7 +390,8 @@ app.post('/update-posts/:id', function (request, response) {
         title: newTitle,
         content: newContent
       }, 
-      validationError
+      validationError,
+      error
     }
     response.render('update-posts.hbs', model)
   }  
@@ -397,6 +415,7 @@ app.get('/update-gpost/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, gbookpost) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
     } else {
       const model = {
@@ -423,6 +442,7 @@ app.post('/update-gpost/:id', function (request, response) {
     const query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
     db.run(query, values, function (error) {
       if (error) {
+        response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
         console.log(error)
       } else {
         response.redirect("/guestbook")
@@ -447,6 +467,7 @@ app.post('/delete-posts/:id', function (request, response) {
   const query = "DELETE FROM blogposts WHERE id = ?"
   db.run(query, [id], function (error) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
     } else {
       response.redirect('/home')
@@ -459,6 +480,7 @@ app.post('/delete-gpost/:id', function (request, response) {
   const query = "DELETE FROM gbookposts WHERE id = ?"
   db.run(query, [id], function (error) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
     } else {
       response.redirect('/guestbook')
@@ -471,6 +493,7 @@ app.post('/delete-project/:id', function (request, response) {
   const query = "DELETE FROM projects WHERE id = ?"
   db.run(query, [id], function (error) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
     } else {
       response.redirect('/portfolio')
@@ -483,6 +506,7 @@ app.get('/portfolio', function (request, response) {
   const query = "SELECT * FROM projects ORDER BY id DESC"
   db.all(query, function (error, projects) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
     } else {
       const model = {
@@ -505,6 +529,7 @@ app.post('/portfolio', function (request, response) {
     const values = [name, description]
     db.run(query, values, function (error) {
       if (error) {
+        response.render('errorMessage.hbs', {errorMessage: "Could not insert data into database, try again later"})
         console.log(error)
       } else {
         response.redirect('/portfolio')
@@ -514,6 +539,7 @@ app.post('/portfolio', function (request, response) {
     const query1 = "SELECT * FROM projects ORDER BY id DESC"
     db.all(query1, function (error, projects) {
     if (error) {
+
       console.log(error)
     } else {
       const model = {
@@ -546,6 +572,7 @@ app.get('/update-project/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, project) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
     } else {
       const model = {
@@ -576,6 +603,7 @@ app.post('/update-project/:id', function (request, response) {
       const query = "UPDATE projects SET name = ?, description = ? WHERE id = ?"
       db.run(query, values, function (error) {
         if (error) {
+          response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
           console.log(error)
         } else {
           response.redirect("/portfolio")
@@ -603,6 +631,7 @@ app.get('/project/:id', function (request, response) {
   const values = [id]
   db.get(query, values, function (error, project) {
     if (error) {
+      response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
     } else {
       const model = {
