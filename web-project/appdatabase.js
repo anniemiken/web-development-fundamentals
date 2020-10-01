@@ -8,8 +8,11 @@ const expressSession = require('express-session')
 const expressHandlebars = require('express-handlebars')
 var path = require('path');
 const bodyParser = require('body-parser')
-const flash = require('connect-flash');
-const SQLiteStore = require("connect-sqlite3")(expressSession); 
+const SQLiteStore = require("connect-sqlite3")(expressSession);
+const db = require('./db')
+const blogRouter = require('./routers/blogpost-router')
+const guestbookRouter = require('./routers/blogpost-router')
+const projectRouter = require('./routers/blogpost-router')
 
 
 const MIN_TITLE_LENGTH = 1
@@ -17,7 +20,9 @@ const MIN_CONTENT_LENGTH = 2
 const MIN_DESCRIPTION_LENGTH = 1
 const MIN_NAME_LENGTH = 1
 
-
+app.use('/guestbook', guestbookRouter)
+app.use('/blogpost', blogRouter)
+app.use('/project', projectRouter)
 app.use(bodyParser.urlencoded({
   extended: false
 }))
@@ -36,35 +41,10 @@ app.use(expressSession({
 app.engine('hbs', expressHandlebars({
   defaultLayout: 'main.hbs',
 }))
-const db = new sqlite3.Database("my-database.db")
 
 
 const adminUsername = "annie"
 const adminPassword = "00aa11"
-
-db.run(`
-  CREATE TABLE IF NOT EXISTS blogposts(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    content TEXT
-  )
-`)
-
-db.run(`
-  CREATE TABLE IF NOT EXISTS gbookposts(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    content TEXT
-  )
-`)
-
-db.run(`
-  CREATE TABLE IF NOT EXISTS projects(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    description TEXT
-  )
-`)
 
 app.get('/', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
@@ -77,8 +57,7 @@ app.get('/', function (request, response) {
 
 app.get('/home', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM blogposts ORDER BY id DESC"
-  db.all(query, function (error, blogposts) {
+  db.getAllBlogposts(function (error, blogposts) {
     if (error) {
       console.log(error) 
       response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
@@ -124,8 +103,7 @@ app.get('/contact', function (request, response) {
 
 app.get('/guestbook', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM gbookposts ORDER BY id DESC"
-  db.all(query, function (error, gbookposts) {
+  db.getAllGuestbookPosts(function (error, gbookposts) {
     if (error) {
       response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
@@ -144,12 +122,10 @@ app.post('/guestbook', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
   const title = request.body.title
   const content = request.body.content
-const errors = getValidationErrorsForPost(title, content);
+  const errors = getValidationErrorsForPost(title, content);
 
   if (errors.length == 0) {
-    const query = "INSERT INTO gbookposts (title, content) VALUES (?,?)"
-    const values = [title, content]
-    db.run(query, values, function (error) {
+    db.createGuestbookPost(title, content, function(error){
       if (error) {
         response.render("errorMessage.hbs", {errorMessage: "Could not insert data into database, Try again later"})
         console.log(error)
@@ -158,8 +134,7 @@ const errors = getValidationErrorsForPost(title, content);
       }
     })
   } else {
-    const query1 = "SELECT * FROM gbookposts ORDER BY id DESC"
-    db.all(query1, function (error, gbookposts) {
+    db.getAllGuestbookPosts(function (error, gbookposts) {
     if (error) {
       response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
@@ -180,9 +155,8 @@ const errors = getValidationErrorsForPost(title, content);
 app.get('/guestbookpost/:id', function (request, response) {
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM gbookposts WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, gbookpost) {
+  
+  db.getGuestbookPostById(id, function (error, gbookpost) {
     if (error) {
       response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
@@ -201,9 +175,7 @@ app.get('/blogpost/:id', function (request, response) {
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
 
-  const query = "SELECT * FROM blogposts WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, blogpost) {
+  db.getAllBlogpostById(id, function(error, blogpost){
     if (error) {
       response.render("errorMessage.hbs", {errorMessage: "Could not select data from database, Try again later"})
       console.log(error)
@@ -312,9 +284,7 @@ app.post('/admin', function (request, response) {
     errors.push("You have to login to make a blogpost.")
   }
   if (errors.length == 0) {
-    const query = "INSERT INTO blogposts (title, content) VALUES (?,?)"
-    const values = [title, content]
-    db.run(query, values, function (error) {
+    db.createBlogPost(title, content, function (error) {
       if (error) {
         console.log(error)
         response.render('errorMessage.hbs', {errorMessage: "Could not insert data into database, try again later"})
@@ -345,9 +315,7 @@ app.get('/update-posts/:id', function (request, response) {
   }*/
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM blogposts WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, blogpost) {
+ db.getAllBlogpostById(id, function(error, blogpost){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not select from database, try again later"})
       console.log(error)
@@ -373,9 +341,7 @@ app.post('/update-posts/:id', function (request, response) {
   }
 
   if(validationError.length == 0){
-    const values = [newTitle, newContent, id]
-    const query = "UPDATE blogposts SET title = ?, content = ? WHERE id = ?"
-    db.run(query, values, function (error) {
+    db.updateBlogpost(newTitle, newContent, id, function(error){
       if (error) {
         response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
         console.log(error)
@@ -411,9 +377,7 @@ app.get('/update-gpost/:id', function (request, response) {
  
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM gbookposts WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, gbookpost) {
+  db.getGuestbookPostById(id, function (error, gbookpost) {
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
@@ -438,9 +402,7 @@ app.post('/update-gpost/:id', function (request, response) {
     validationError.push("You have to login to update a gueestbook post.")
   }
   if(validationError.length == 0){
-    const values = [newTitle, newContent, id]
-    const query = "UPDATE gbookposts SET title = ?, content = ? WHERE id = ?"
-    db.run(query, values, function (error) {
+    db.updateGuestbookPosts(newTitle, newContent, id, function(error){
       if (error) {
         response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
         console.log(error)
@@ -464,8 +426,7 @@ app.post('/update-gpost/:id', function (request, response) {
 
 app.post('/delete-posts/:id', function (request, response) {
   const id = request.params.id
-  const query = "DELETE FROM blogposts WHERE id = ?"
-  db.run(query, [id], function (error) {
+  db.deleteBlogPostById(id, function(error){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
@@ -477,8 +438,7 @@ app.post('/delete-posts/:id', function (request, response) {
 
 app.post('/delete-gpost/:id', function (request, response) {
   const id = request.params.id
-  const query = "DELETE FROM gbookposts WHERE id = ?"
-  db.run(query, [id], function (error) {
+  db.deleteGuestbookPostsById(id, function(error){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
@@ -490,8 +450,7 @@ app.post('/delete-gpost/:id', function (request, response) {
 
 app.post('/delete-project/:id', function (request, response) {
   const id = request.params.id
-  const query = "DELETE FROM projects WHERE id = ?"
-  db.run(query, [id], function (error) {
+  db.deleteProjectsById(id, function(error){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not delete data from database, try again later"})
       console.log(error)
@@ -503,8 +462,7 @@ app.post('/delete-project/:id', function (request, response) {
 
 app.get('/portfolio', function (request, response) {
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM projects ORDER BY id DESC"
-  db.all(query, function (error, projects) {
+  db.getAllProjects(function (error, projects){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
@@ -525,9 +483,7 @@ app.post('/portfolio', function (request, response) {
   const description = request.body.description
   const validationError = getValidationErrorsForProject(name, description);
   if(validationError.length == 0){
-    const query = "INSERT INTO projects (name, description) VALUES (?,?)"
-    const values = [name, description]
-    db.run(query, values, function (error) {
+    db.createProject(name, description, function(error){
       if (error) {
         response.render('errorMessage.hbs', {errorMessage: "Could not insert data into database, try again later"})
         console.log(error)
@@ -536,10 +492,9 @@ app.post('/portfolio', function (request, response) {
       }
     })
   }else{
-    const query1 = "SELECT * FROM projects ORDER BY id DESC"
-    db.all(query1, function (error, projects) {
+    db.getAllProjects(function(error, projects){
     if (error) {
-
+      response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
     } else {
       const model = {
@@ -568,9 +523,7 @@ app.get('/update-project/:id', function (request, response) {
  
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
-  const query = "SELECT * FROM projects WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, project) {
+  db.getProjectById(id, function(error, project){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
@@ -599,9 +552,7 @@ app.post('/update-project/:id', function (request, response) {
     validationError.push("You have to login to update a project post.")
   }
     if(validationError.length == 0){
-      const values = [newName, newDescription, id]
-      const query = "UPDATE projects SET name = ?, description = ? WHERE id = ?"
-      db.run(query, values, function (error) {
+      db.updateProjects(newName, newDescription, id, function(error){
         if (error) {
           response.render('errorMessage.hbs', {errorMessage: "Could not update data into database, try again later"})
           console.log(error)
@@ -627,9 +578,7 @@ app.get('/project/:id', function (request, response) {
   const id = request.params.id
   const isLoggedIn = request.session.isLoggedIn
 
-  const query = "SELECT * FROM projects WHERE id = ?"
-  const values = [id]
-  db.get(query, values, function (error, project) {
+  db.getProjectById(id, function(error, project){
     if (error) {
       response.render('errorMessage.hbs', {errorMessage: "Could not select data from database, try again later"})
       console.log(error)
