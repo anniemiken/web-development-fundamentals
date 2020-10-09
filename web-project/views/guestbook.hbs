@@ -1,0 +1,44 @@
+<p>Welcome to guestbook, here you can post your opinion, it will help me!</p>
+<form method="get" action="/guestbook/search"  id="search-box" class="input-group input-inline">
+      <input class="form-input input-sm" type="text" name="search" placeholder="Search guestbook title">
+      <input type="submit" class="btn btn-primary btn-sm input-group-btn" value="Search">
+</form>
+<h3>Upload new guestbook posts</h3>
+{{#if errors.length}}
+<p>Couldn't create guestbook-post because:</p>
+<ul>
+    {{#each errors}}
+    <li>{{this}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+<form class="form-group" id="guest2" method="post" action="/guestbook">
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  <label class="form-label" for="input-example-1">Name</label>
+  <input class="form-input" type="text" name="title" id="input-example-1" placeholder="Title" >
+  <label class="form-label" for="input-example-3">Message</label>
+  <textarea class="form-input" id="input-example-3" placeholder="Textarea" name="content" rows="3" ></textarea>
+  <br>
+  <input type="submit" class="btn btn-primary" value="Post">
+</form>
+<h3>Guestbook posts</h3>
+{{#if gbookposts.length}}
+    {{#each gbookposts}}
+    <div class="box-post">
+      <h3>#{{id}} {{title}}</h3>
+      <p>{{content}}</p>
+      <form method="get" action="/guestbook/guestbookpost/{{id}}">
+        <input type="submit" class="btn btn-primary" value="Read more">  
+      </form>
+      {{#if ../isLoggedIn}}
+       <a href="/guestbook/update/{{id}}" class="btn btn-success">Update guestbook post</a>
+      <form method="post" action="/guestbook/delete/{{id}}">
+        <!--<input type="hidden" name="_csrf" value="{{csrfToken}}">-->
+        <input type="submit" class="btn btn-error" value="Delete post">  
+      </form>     
+      {{/if}}
+    </div>
+    {{/each}}
+{{else}}
+  <p>No guestbookposts exist.</p>
+{{/if}}
