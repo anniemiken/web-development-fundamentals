@@ -1,0 +1,18 @@
+<h3>Update project</h3>
+{{#if validationError.length}}
+<p>Couldn't update project because:</p>
+<ul>
+    {{#each validationError}}
+    <li>{{this}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+<form method="post" class="form-group" id="guest2" action="/project/update/{{project.id}}">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
+    <label class="form-label" for="input-example-1">Name</label>
+    <input class="form-input" type="text" id="input-example-1" name="name" value="{{project.name}}">
+    <label class="form-label" for="input-example-3">Description</label>
+    <textarea class="form-input" id="input-example-3" name="description" rows="5">{{project.description}}</textarea>
+    <br>
+    <input type="submit" class="btn btn-primary" value="Save">
+</form>
