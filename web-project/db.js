@@ -79,6 +79,22 @@ exports.getGuestbookPostById = function(id, callback){
   })
 }
 
+exports.getGuestbookPostsBySearch = function(search, callback){
+  const query = "SELECT * FROM gbookposts WHERE title LIKE ? ORDER BY id DESC"
+  const values = [search+'%']
+  db.all(query, values, function(error, gbookposts){
+    callback(error, gbookposts)
+  })
+}
+
+exports.getBlogPostsBySearch = function(search, callback){
+  const query = "SELECT * FROM blogposts WHERE title LIKE ? ORDER BY id DESC"
+  const values = [search+'%']
+  db.all(query, values, function(error, blogposts){
+    callback(error, blogposts)
+  })
+}
+
 exports.getAllBlogpostById = function(id, callback){
   const query = "SELECT * FROM blogposts WHERE id = ?"
   const values = [id]
