@@ -1,2 +1,41 @@
-<main>
-</main>
+<h2>All projects</h2>
+{{#if isLoggedIn}}
+{{#if validationError.length}}
+<p>Couldn't create post because:</p>
+<ul>
+    {{#each validationError }}
+    <li>{{this}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+<form class="form-group" id="guest2" method="post" action="/project/portfolio">
+  <input type="hidden" name="_csrf" value="{{csrfToken}}">
+  <label class="form-label" for="input-example-1">Name</label>
+  <input class="form-input" type="text" name="name" id="input-example-1" placeholder="Name" >
+  <label class="form-label" for="input-example-3">Desciption</label>
+  <textarea class="form-input" id="input-example-3" placeholder="Description" name="description" rows="3" ></textarea>
+  <br>
+  <input type="submit" class="btn btn-primary" value="Post">
+</form>
+{{/if}}
+{{#if projects.length}}
+    {{#each projects}}
+    <div class="box-post">
+        <img src="/img/divpic.jpeg" class="divpic" alt="project picture">
+      <h3>{{name}}</h3>
+      <form method="get" action="/project/{{id}}">
+        <input type="submit" class="btn btn-primary" value="Read more">  
+      </form> 
+      {{#if ../isLoggedIn}}
+        <a href="/project/update/{{id}}" class="btn btn-success">Update project</a>
+      <form method="post" action="/project/delete/{{id}}">
+        <!--<input type="hidden" name="_csrf" value="{{csrfToken1}}">-->
+        <input type="submit" class="btn btn-error" value="Delete project">  
+      </form>  
+      {{/if}}
+      <br style = "clear: left">
+    </div>
+    {{/each}}
+{{else}}
+  <p>No projects exist.</p>
+{{/if}}
