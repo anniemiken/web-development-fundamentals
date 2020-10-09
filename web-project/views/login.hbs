@@ -8,20 +8,31 @@
   <title>Log in form</title>
 </head>
 <body>
-   <form method="get" action="/home">
+   <form method="get" action="/blogpost/home">
     <button class="btn-group"type="submit"><i class="fa fa-home"></i>Home</button>
   </form>
+  <form method="post">
     <div class="login-box">
+  {{#if errors.length}}
+    <p>Couldn't login because:</p>
+    <ul>
+      {{#each errors}}
+      <li>{{this}}</li>
+      {{/each}}
+    </ul>
+  {{/if}}
       <h1>Login</h1>
       <div class="textbox">
       <i class="fa fa-user-circle"></i>
-      <input type="text" placeholder="Username" name="" value="">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+      <input type="text" placeholder="Username" name="username" value="">
       </div>
       <div class="textbox">
         <i class="fa fa-key"></i>
-        <input type="password" placeholder="Password" name="" value="">
+        <input type="password" placeholder="Password" name="password" value="">
       </div>
-      <input class="btn" type="button" name="" value="Log in">
+      <input class="btn" type="submit" name="" value="Log in">
   </div>
+  </form>
 </body>
 </html>
