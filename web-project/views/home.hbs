@@ -1,20 +1,27 @@
-<p>Welcome to my website, my name is Annie Johansson and I am a software engineering student</p>
+<p>Hi and welcome to my website, so fun that you have found this webpage<br> Hi my name is Annie Johansson and I am a software engineering student, On this page I will upload blogposts about myself and about other stuff. </p>
+<form method="get" action="/blogpost/search" id="search-box" class="input-group input-inline">
+      <input class="form-input input-sm" type="text" name="search" placeholder="Search blogpost title">
+      <input type="submit" class="btn btn-primary btn-sm input-group-btn" value="Search">
+</form>
 <h2>Daily posts</h2>
-{{#if posts.length}}
-    {{#each posts}}
+{{#if blogposts.length}}
+    {{#each blogposts}}
     <div class="box-post">
-      <h3>#{{id}} {{atitle}}</h3>
-      <p>{{acontent}}</p>
-      {{#if ../isLoggedIn}}
-      <form method="post" action="/update-posts/{{id}}">
-        <input type="submit" class="btn btn-success" value="Update post">
+      <h3>#{{id}} {{title}}</h3>
+      <p>{{content}}</p>
+      <form method="get" action="/blogpost/blogpost/{{id}}">
+        <input type="submit" class="btn btn-primary" value="Read more">  
       </form> 
-      <form method="post" action="/delete-posts/{{id}}">
+      {{#if ../isLoggedIn}}
+        <a href="/blogpost/update/{{id}}" class="btn btn-success">Update post</a>
+      <form method="post" action="/blogpost/delete/{{id}}">
+        <!--<input type="hidden" name="_csrf" value="{{csrfToken}}">-->
         <input type="submit" class="btn btn-error" value="Delete post">  
-      </form>   
+      </form>  
       {{/if}}
     </div>
     {{/each}}
 {{else}}
   <p>No posts exist.</p>
 {{/if}}
+
