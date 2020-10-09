@@ -1,5 +1,14 @@
 <h3>Update guestbook</h3>
-<form method="post" class="form-group" id="guest2" action="/update-gpost/{{gbookpost.id}}">
+{{#if validationError.length}}
+<p>Couldn't update guestbookpost because:</p>
+<ul>
+    {{#each validationError}}
+    <li>{{this}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+<form method="post" class="form-group" id="guest2" action="/guestbook/update/{{gbookpost.id}}">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
     <label class="form-label" for="input-example-1">Title</label>
     <input class="form-input" type="text" id="input-example-1" name="title" value="{{gbookpost.title}}">
     <label class="form-label" for="input-example-3">Message</label>
