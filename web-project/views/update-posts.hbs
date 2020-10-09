@@ -1,5 +1,14 @@
 <h3>Update post</h3>
-<form method="post" class="form-group" id="guest2" action="/update-posts/{{blogpost.id}}">
+{{#if validationError.length}}
+<p>Couldn't create post because:</p>
+<ul>
+    {{#each validationError}}
+    <li>{{this}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+<form method="post" class="form-group" id="guest2" action="/blogpost/update/{{blogpost.id}}">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}">
     <label class="form-label" for="input-example-1">Title</label>
     <input class="form-input" type="text" id="input-example-1" name="title" value="{{blogpost.title}}">
     <label class="form-label" for="input-example-3">Message</label>
